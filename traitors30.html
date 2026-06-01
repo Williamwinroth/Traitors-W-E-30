@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Traitors</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;900&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --bg: #0a0705;
+    --surface: #130f0a;
+    --surface2: #1c1510;
+    --surface3: #251c14;
+    --gold: #c9a84c;
+    --gold2: #e8c96a;
+    --gold-dim: #7a6330;
+    --red: #8b1a1a;
+    --red2: #c0392b;
+    --red-light: #e74c3c;
+    --text: #e8dcc8;
+    --text-dim: #9a8a72;
+    --text-muted: #5a4d3d;
+    --border: #2a2018;
+    --border2: #3d2e1e;
+  }
+  body {
+    font-family: 'Crimson Text', serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+  }
+  #app { width: 100%; max-width: 480px; }
+  h1, h2, h3 { font-family: 'Cinzel', serif; letter-spacing: 0.05em; }
+  .logo { text-align: center; margin-bottom: 2rem; }
+  .logo h1 {
+    font-size: clamp(1.8rem, 8vw, 3rem);
+    font-weight: 900;
+    color: var(--gold);
+    text-shadow: 0 0 40px rgba(201,168,76,0.3);
+    letter-spacing: 0.15em;
+  }
+  .logo .subtitle {
+    font-size: 0.9rem;
+    color: var(--text-dim);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-top: 0.3rem;
+  }
+  .divider {
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold-dim), transparent);
+    margin: 1.5rem 0;
+  }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: 4px;
+    padding: 1.5rem;
+  }
+  .card-title {
+    font-family: 'Cinzel', serif;
+    font-size: 0.85rem;
+    color: var(--gold);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+  }
+  input[type="text"] {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 3px;
+    padding: 0.75rem 1rem;
+    color: var(--text);
+    font-family: 'Crimson Text', serif;
+    font-size: 1.1rem;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  input[type="text"]:focus { border-color: var(--gold-dim); }
+  input[type="text"]::placeholder { color: var(--text-muted); }
+  .btn {
+    width: 100%;
+    padding: 0.85rem 1.5rem;
+    border: 1px solid var(--gold-dim);
+    background: transparent;
+    color: var(--gold);
+    font-family: 'Cinzel', serif;
+    font-size: 0.85rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 0.75rem;
+  }
+  .btn:hover { background: rgba(201,168,76,0.1); border-color: var(--gold); }
+  .btn-danger { border-color: var(--red); color: var(--red-light); }
+  .btn-danger:hover { background: rgba(139,26,26,0.2); border-color: var(--red-light); }
+  .btn-disabled { opacity: 0.4; cursor: not-allowed; pointer-events: none; }
+  .player-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    max-height: 320px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border2) transparent;
+  }
+  .player-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.6rem 0.75rem;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    font-size: 1rem;
+  }
+  .player-item.eliminated { opacity: 0.35; text-decoration: line-through; }
+  .player-item.murdered { opacity: 0.25; text-decoration: line-through; color: var(--red-light); }
+  .player-number {
+    font-family: 'Cinzel', serif;
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    min-width: 1.5rem;
+    text-align: right;
+  }
+  .vote-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.4rem;
+    max-height: 400px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border2) transparent;
+  }
+  .vote-btn {
+    padding: 0.65rem 0.5rem;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 3px;
+    color: var(--text);
+    font-family: 'Crimson Text', serif;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: center;
+  }
+  .vote-btn:hover { border-color: var(--gold-dim); background: var(--surface3); }
+  .vote-btn.selected { border-color: var(--gold); background: rgba(201,168,76,0.12); color: var(--gold2); font-weight: 600; }
+  .results-list { display: flex; flex-direction: column; gap: 0.5rem; margin: 1rem 0; }
+  .result-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.65rem 0.9rem;
+    border-radius: 3px;
+    border: 1px solid var(--border2);
+    background: var(--surface2);
+  }
+  .result-item.top { border-color: var(--red); background: rgba(139,26,26,0.15); }
+  .vote-count { font-family: 'Cinzel', serif; font-size: 0.8rem; color: var(--text-dim); }
+  .vote-count.top { color: var(--red-light); }
+  .status-badge {
+    display: inline-block;
+    font-family: 'Cinzel', serif;
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    padding: 0.2rem 0.6rem;
+    border-radius: 2px;
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+  }
+  .badge-round { background: rgba(201,168,76,0.1); border: 1px solid var(--gold-dim); color: var(--gold); }
+  .badge-eliminated { background: rgba(139,26,26,0.2); border: 1px solid var(--red); color: var(--red-light); }
+  .murder-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    margin-bottom: 0.4rem;
+  }
+  .murder-row input[type="checkbox"] { accent-color: var(--red-light); width: 16px; height: 16px; cursor: pointer; }
+  .murder-name { flex: 1; font-size: 1rem; }
+  .count-display {
+    font-family: 'Cinzel', serif;
+    font-size: 2rem;
+    font-weight: 900;
+    color: var(--gold);
+    text-align: center;
+    margin: 1rem 0;
+  }
+  .info-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    margin-bottom: 1rem;
+  }
+  .waiting-dot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--gold);
+    margin-right: 6px;
+    animation: pulse 1.5s infinite;
+  }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.2; } }
+  .host-badge {
+    display: inline-block;
+    background: rgba(139,26,26,0.3);
+    border: 1px solid var(--red);
+    color: var(--red-light);
+    font-family: 'Cinzel', serif;
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    padding: 0.2rem 0.6rem;
+    border-radius: 2px;
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+  }
+  .error-msg { color: var(--red-light); font-size: 0.9rem; margin-top: 0.5rem; text-align: center; }
+  .success-msg {
+    color: var(--gold2);
+    font-size: 1rem;
+    text-align: center;
+    padding: 0.75rem;
+    border: 1px solid var(--gold-dim);
+    border-radius: 3px;
+    background: rgba(201,168,76,0.05);
+  }
+  .winner-display { text-align: center; padding: 2rem 0; }
+  .winner-display h2 { font-size: 1.8rem; color: var(--gold2); margin-bottom: 1.5rem; }
+  .winner-item { font-size: 1.2rem; padding: 0.5rem 0; border-bottom: 1px solid var(--border2); color: var(--text); }
+  .progress-dots { display: flex; justify-content: center; gap: 0.5rem; margin-bottom: 1.5rem; }
+  .progress-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--border2); border: 1px solid var(--text-muted); }
+  .progress-dot.done { background: var(--gold-dim); border-color: var(--gold); }
+  .progress-dot.active { background: var(--gold); border-color: var(--gold2); }
+  .loading { text-align: center; padding: 3rem 1rem; color: var(--text-dim); font-family: 'Cinzel', serif; font-size: 0.85rem; letter-spacing: 0.2em; }
+</style>
+</head>
+<body>
+<div id="app"><div class="loading">Entering the castle...</div></div>
+
+<!-- Firebase -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, onValue, set, update, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAJ-HVcizUJ0sJ066nVc068dV1oFMRD-TU",
+  authDomain: "william-eira-30.firebaseapp.com",
+  databaseURL: "https://william-eira-30-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "william-eira-30",
+  storageBucket: "william-eira-30.firebasestorage.app",
+  messagingSenderId: "509840515800",
+  appId: "1:509840515800:web:33309b9d2c2e11fa0a2dad"
+};
+
+const firebaseApp = initializeApp(firebaseConfig);
+const db = getDatabase(firebaseApp);
+const gameRef = ref(db, 'traitors_game');
+
+const HOST_SECRET = 'secret';
+
+function isHost() {
+  return new URLSearchParams(window.location.search).get('host') === HOST_SECRET;
+}
+
+function defaultState() {
+  return {
+    phase: 'join',
+    round: 1,
+    players: [],
+    votes: {},
+    eliminated: [],
+    murdered: [],
+    gameOver: false
+  };
+}
+
+async function getState() {
+  const snap = await get(gameRef);
+  return snap.exists() ? snap.val() : defaultState();
+}
+
+async function setState(newState) {
+  await set(gameRef, newState);
+}
+
+async function patchState(updates) {
+  await update(gameRef, updates);
+}
+
+class TraitorsApp {
+  constructor() {
+    this.state = defaultState();
+    this.myName = sessionStorage.getItem('traitors_me') || null;
+    this.host = isHost();
+    this.selectedVote = null;
+    this.murderSelections = new Set();
+
+    onValue(gameRef, (snap) => {
+      if (snap.exists()) {
+        this.state = snap.val();
+        this.state.players = this.state.players || [];
+        this.state.votes = this.state.votes || {};
+        this.state.eliminated = this.state.eliminated || [];
+        this.state.murdered = this.state.murdered || [];
+      } else {
+        this.state = defaultState();
+      }
+      this.render();
+    });
+  }
+
+  activePlayers() {
+    return this.state.players.filter(p =>
+      !this.state.eliminated.includes(p) && !this.state.murdered.includes(p)
+    );
+  }
+
+  getTopVoted(n) {
+    const votes = this.state.votes || {};
+    const counts = {};
+    Object.values(votes).forEach(v => { counts[v] = (counts[v] || 0) + 1; });
+    return Object.entries(counts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, n)
+      .map(([name, count]) => ({ name, count }));
+  }
+
+  render() {
+    const app = document.getElementById('app');
+    let html = `<div class="logo"><h1>THE TRAITORS</h1><p class="subtitle">Who among you can be trusted?</p></div>`;
+
+    if (this.host) {
+      html += this.renderHost();
+    } else {
+      const s = this.state;
+      if (s.phase === 'join' || s.phase === 'waiting') html += this.renderJoin();
+      else if (s.phase === 'voting') html += this.renderVoting();
+      else if (s.phase === 'results') html += this.renderResults();
+      else if (s.phase === 'murder') html += this.renderMurderWait();
+      else if (s.phase === 'summary') html += this.renderSummary();
+      else if (s.phase === 'gameover') html += this.renderGameover();
+    }
+
+    app.innerHTML = html;
+    this.attachEvents();
+  }
+
+  renderJoin() {
+    const s = this.state;
+    const active = this.activePlayers();
+    if (this.myName && s.players.includes(this.myName)) {
+      const isOut = s.eliminated.includes(this.myName) || s.murdered.includes(this.myName);
+      if (isOut) {
+        return `<div class="card">
+          <div class="card-title" style="color:var(--red-light)">You have been removed</div>
+          <p style="color:var(--text-dim)">You may watch the proceedings from the shadows.</p>
+        </div>`;
+      }
+      return `<div class="card">
+        <div class="card-title">You're in</div>
+        <div class="success-msg">Welcome, ${this.myName}.<br>Waiting for the game to begin...</div>
+        <div style="margin-top:1rem;color:var(--text-dim);font-size:0.9rem;text-align:center;">
+          <span class="waiting-dot"></span>${active.length} player${active.length !== 1 ? 's' : ''} joined
+        </div>
+      </div>`;
+    }
+    return `<div class="card">
+      <div class="card-title">Enter the Castle</div>
+      <input type="text" id="name-input" placeholder="Your name..." maxlength="30" />
+      <div id="join-error" class="error-msg"></div>
+      <button class="btn" id="join-btn">Join the Game</button>
+      <div style="margin-top:1rem;color:var(--text-dim);font-size:0.9rem;text-align:center;">
+        <span class="waiting-dot"></span>${active.length} player${active.length !== 1 ? 's' : ''} joined
+      </div>
+    </div>`;
+  }
+
+  renderVoting() {
+    const s = this.state;
+    const active = this.activePlayers();
+    const myName = this.myName;
+
+    if (!myName || !s.players.includes(myName)) {
+      return `<div class="card"><p style="color:var(--text-dim)">You are not registered in this game.</p></div>`;
+    }
+    if (s.eliminated.includes(myName) || s.murdered.includes(myName)) {
+      return `<div class="card">
+        <div class="card-title" style="color:var(--red-light)">You have been removed</div>
+        <p style="color:var(--text-dim)">You may watch the proceedings from the shadows.</p>
+      </div>`;
+    }
+    if (s.votes && s.votes[myName]) {
+      return `<div class="card">
+        <div class="card-title">Vote Cast</div>
+        <div class="success-msg">Your vote has been recorded.<br>Waiting for others...</div>
+        <div style="margin-top:1rem;color:var(--text-dim);font-size:0.9rem;text-align:center;">
+          ${Object.keys(s.votes).length} / ${active.length} voted
+        </div>
+      </div>`;
+    }
+
+    const votable = active.filter(p => p !== myName);
+    const btns = votable.map(p =>
+      `<button class="vote-btn ${this.selectedVote === p ? 'selected' : ''}" data-vote="${p}">${p}</button>`
+    ).join('');
+
+    return `<div class="card">
+      <div class="status-badge badge-round">Round ${s.round} — Vote</div>
+      <div class="card-title">Who is the Traitor?</div>
+      <div class="vote-grid">${btns}</div>
+      <div class="divider"></div>
+      <button class="btn ${!this.selectedVote ? 'btn-disabled' : ''}" id="submit-vote">
+        ${this.selectedVote ? `Banish ${this.selectedVote}` : 'Select a suspect'}
+      </button>
+      <div style="margin-top:0.75rem;color:var(--text-dim);font-size:0.85rem;text-align:center;">
+        ${Object.keys(s.votes || {}).length} / ${active.length} voted
+      </div>
+    </div>`;
+  }
+
+  renderResults() {
+    const top = this.getTopVoted(6);
+    const items = top.map(item =>
+      `<div class="result-item top">
+        <span>${item.name}</span>
+        <span class="vote-count top">${item.count} vote${item.count !== 1 ? 's' : ''}</span>
+      </div>`
+    ).join('');
+    return `<div class="card">
+      <div class="status-badge badge-eliminated">Eliminated</div>
+      <div class="card-title">The Banished</div>
+      <div class="results-list">${items}</div>
+      <div class="divider"></div>
+      <p style="color:var(--text-dim);font-size:0.9rem;text-align:center;">
+        <span class="waiting-dot"></span>Waiting for the host...
+      </p>
+    </div>`;
+  }
+
+  renderMurderWait() {
+    return `<div class="card">
+      <div class="card-title" style="color:var(--red-light)">The Traitors Strike</div>
+      <p style="color:var(--text-dim);font-size:0.95rem;">The Traitors have convened in secret.<br>Their victims will be revealed shortly...</p>
+      <div style="margin-top:1.5rem;text-align:center;font-size:2rem;">🕯️</div>
+      <div style="margin-top:1rem;color:var(--text-dim);font-size:0.85rem;text-align:center;">
+        <span class="waiting-dot"></span>Awaiting host
+      </div>
+    </div>`;
+  }
+
+  renderSummary() {
+    const s = this.state;
+    const active = this.activePlayers();
+    const recentElim = (s.eliminated || []).slice(-6);
+    const recentMurdered = (s.murdered || []).slice(-4);
+    return `<div class="card">
+      <div class="status-badge badge-round">Round ${s.round - 1} Complete</div>
+      <div class="count-display">${active.length} remain</div>
+      <div class="divider"></div>
+      <p style="color:var(--text-dim);font-size:0.85rem;margin-bottom:0.5rem;">Banished this round:</p>
+      ${recentElim.map(p => `<div class="player-item eliminated"><span class="player-number">⚖</span>${p}</div>`).join('')}
+      <p style="color:var(--red-light);font-size:0.85rem;margin:0.75rem 0 0.5rem;">Murdered this round:</p>
+      ${recentMurdered.map(p => `<div class="player-item murdered"><span class="player-number">☠</span>${p}</div>`).join('')}
+      <div class="divider"></div>
+      <p style="color:var(--text-dim);font-size:0.9rem;text-align:center;">
+        <span class="waiting-dot"></span>Waiting for next round...
+      </p>
+    </div>`;
+  }
+
+  renderGameover() {
+    const active = this.activePlayers();
+    return `<div class="card">
+      <div class="winner-display">
+        <h2>The Final Ten</h2>
+        ${active.map(p => `<div class="winner-item">${p}</div>`).join('')}
+      </div>
+      <div class="divider"></div>
+      <p style="color:var(--text-dim);font-size:0.9rem;text-align:center;">The game is complete. The truth will be revealed.</p>
+    </div>`;
+  }
+
+  renderHost() {
+    const s = this.state;
+    const active = this.activePlayers();
+    let controls = '';
+
+    const dots = [1,2,3,4].map(r =>
+      `<div class="progress-dot ${r < s.round ? 'done' : r === s.round ? 'active' : ''}"></div>`
+    ).join('');
+
+    if (s.phase === 'join' || s.phase === 'waiting') {
+      const list = s.players.map((p, i) =>
+        `<div class="player-item ${s.eliminated.includes(p) ? 'eliminated' : s.murdered.includes(p) ? 'murdered' : ''}">
+          <span class="player-number">${i + 1}</span>${p}
+        </div>`
+      ).join('');
+      controls = `
+        <div class="info-row"><span>Players joined</span><span style="color:var(--gold)">${s.players.length}</span></div>
+        <div class="info-row"><span>Active</span><span style="color:var(--gold)">${active.length}</span></div>
+        <div class="player-list">${list || '<p style="color:var(--text-muted);font-size:0.9rem">No players yet...</p>'}</div>
+        <div class="divider"></div>
+        <button class="btn" id="host-open-voting">Open Voting — Round ${s.round}</button>
+        <button class="btn btn-danger" id="host-reset" style="margin-top:0.5rem">Reset Game</button>`;
+    }
+
+    else if (s.phase === 'voting') {
+      const voteCount = Object.keys(s.votes || {}).length;
+      controls = `
+        <div class="info-row"><span>Votes cast</span><span style="color:var(--gold)">${voteCount} / ${active.length}</span></div>
+        <div style="background:var(--surface2);border:1px solid var(--border2);border-radius:3px;padding:0.75rem;margin-bottom:1rem;">
+          ${this.getTopVoted(3).map(v =>
+            `<div style="display:flex;justify-content:space-between;padding:0.3rem 0;font-size:0.95rem;">
+              <span>${v.name}</span><span style="color:var(--gold)">${v.count}</span>
+            </div>`).join('') || '<p style="color:var(--text-muted);font-size:0.9rem">No votes yet</p>'}
+        </div>
+        <button class="btn" id="host-show-results">Close Voting & Show Results</button>`;
+    }
+
+    else if (s.phase === 'results') {
+      const top6names = this.getTopVoted(6).map(x => x.name);
+      const murderable = active.filter(p => !top6names.includes(p));
+      const selCount = this.murderSelections.size;
+      controls = `
+        <p style="color:var(--text-dim);font-size:0.85rem;margin-bottom:0.75rem;">Select exactly 4 to murder:</p>
+        <div style="max-height:260px;overflow-y:auto;">
+          ${murderable.map(p => `
+            <div class="murder-row">
+              <input type="checkbox" class="murder-check" data-name="${p}" ${this.murderSelections.has(p) ? 'checked' : ''} />
+              <span class="murder-name">${p}</span>
+            </div>`).join('')}
+        </div>
+        <div style="margin-top:0.75rem;color:${selCount === 4 ? 'var(--gold)' : 'var(--red-light)'};font-family:Cinzel,serif;font-size:0.8rem;text-align:center;">
+          ${selCount} / 4 selected
+        </div>
+        <button class="btn btn-danger ${selCount !== 4 ? 'btn-disabled' : ''}" id="host-do-murder">Confirm Murders</button>`;
+    }
+
+    else if (s.phase === 'murder') {
+      if (s.round > 4 || active.length <= 10) {
+        controls = `<button class="btn" id="host-end-game">End Game — Reveal Final Ten</button>`;
+      } else {
+        controls = `<button class="btn" id="host-next-round">Show Round Summary</button>`;
+      }
+    }
+
+    else if (s.phase === 'summary') {
+      controls = `<button class="btn" id="host-open-voting">Open Voting — Round ${s.round}</button>`;
+    }
+
+    else if (s.phase === 'gameover') {
+      controls = `
+        <p style="color:var(--text-dim);text-align:center;margin-bottom:1rem;">Game complete.</p>
+        <button class="btn btn-danger" id="host-reset">Reset Game</button>`;
+    }
+
+    return `
+      <div class="host-badge">Host Panel</div>
+      <div class="progress-dots">${dots}</div>
+      <div class="card">
+        <div class="card-title">Round ${s.round} — ${s.phase.toUpperCase()}</div>
+        <div class="info-row"><span>Active players</span><span style="color:var(--gold)">${active.length}</span></div>
+        ${controls}
+      </div>`;
+  }
+
+  attachEvents() {
+    const s = this.state;
+
+    const joinBtn = document.getElementById('join-btn');
+    if (joinBtn) {
+      const doJoin = async () => {
+        const input = document.getElementById('name-input');
+        const name = (input?.value || '').trim();
+        const err = document.getElementById('join-error');
+        if (!name) { if (err) err.textContent = 'Please enter your name.'; return; }
+        const current = await getState();
+        if ((current.players || []).includes(name)) {
+          if (err) err.textContent = 'That name is already taken.'; return;
+        }
+        if (current.phase !== 'join' && current.phase !== 'waiting') {
+          if (err) err.textContent = 'The game has already started.'; return;
+        }
+        sessionStorage.setItem('traitors_me', name);
+        this.myName = name;
+        const players = [...(current.players || []), name];
+        await update(gameRef, { players, phase: 'waiting' });
+      };
+      joinBtn.addEventListener('click', doJoin);
+      const ni = document.getElementById('name-input');
+      if (ni) ni.addEventListener('keydown', e => { if (e.key === 'Enter') doJoin(); });
+    }
+
+    document.querySelectorAll('.vote-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        this.selectedVote = btn.dataset.vote;
+        this.render();
+      });
+    });
+
+    const submitVote = document.getElementById('submit-vote');
+    if (submitVote && this.selectedVote) {
+      submitVote.addEventListener('click', async () => {
+        if (!this.selectedVote || !this.myName) return;
+        await update(gameRef, { [`votes/${this.myName}`]: this.selectedVote });
+      });
+    }
+
+    document.querySelectorAll('.murder-check').forEach(cb => {
+      cb.addEventListener('change', () => {
+        const name = cb.dataset.name;
+        if (cb.checked) {
+          if (this.murderSelections.size < 4) this.murderSelections.add(name);
+          else cb.checked = false;
+        } else {
+          this.murderSelections.delete(name);
+        }
+        this.render();
+      });
+    });
+
+    const openVoting = document.getElementById('host-open-voting');
+    if (openVoting) {
+      openVoting.addEventListener('click', async () => {
+        await update(gameRef, { phase: 'voting', votes: {} });
+      });
+    }
+
+    const showResults = document.getElementById('host-show-results');
+    if (showResults) {
+      showResults.addEventListener('click', async () => {
+        await update(gameRef, { phase: 'results' });
+      });
+    }
+
+    const doMurder = document.getElementById('host-do-murder');
+    if (doMurder) {
+      doMurder.addEventListener('click', async () => {
+        if (this.murderSelections.size !== 4) return;
+        const current = await getState();
+        const top6 = this.getTopVoted(6).map(x => x.name);
+        const murdered = Array.from(this.murderSelections);
+        const eliminated = [...new Set([...(current.eliminated || []), ...top6])];
+        const murderedAll = [...new Set([...(current.murdered || []), ...murdered])];
+        await set(gameRef, { ...current, eliminated, murdered: murderedAll, phase: 'murder' });
+        this.murderSelections.clear();
+      });
+    }
+
+    const nextRound = document.getElementById('host-next-round');
+    if (nextRound) {
+      nextRound.addEventListener('click', async () => {
+        const current = await getState();
+        await set(gameRef, { ...current, phase: 'summary', round: (current.round || 1) + 1 });
+      });
+    }
+
+    const endGame = document.getElementById('host-end-game');
+    if (endGame) {
+      endGame.addEventListener('click', async () => {
+        await update(gameRef, { phase: 'gameover', gameOver: true });
+      });
+    }
+
+    const resetBtn = document.getElementById('host-reset');
+    if (resetBtn) {
+      resetBtn.addEventListener('click', async () => {
+        if (confirm('Reset the entire game? This cannot be undone.')) {
+          await set(gameRef, defaultState());
+          sessionStorage.removeItem('traitors_me');
+          this.myName = null;
+          this.murderSelections.clear();
+          this.selectedVote = null;
+        }
+      });
+    }
+  }
+}
+
+new TraitorsApp();
+</script>
+</body>
+</html>
