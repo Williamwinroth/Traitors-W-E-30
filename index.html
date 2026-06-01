@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Förrädarna 30årskalas edition</title>
+<title>The Traitors</title>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;900&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -516,8 +516,7 @@ class TraitorsApp {
         <div class="info-row"><span>Active</span><span style="color:var(--gold)">${active.length}</span></div>
         <div class="player-list">${list || '<p style="color:var(--text-muted);font-size:0.9rem">No players yet...</p>'}</div>
         <div class="divider"></div>
-        <button class="btn" id="host-open-voting">Open Voting — Round ${s.round}</button>
-        <button class="btn btn-danger" id="host-reset" style="margin-top:0.5rem">Reset Game</button>`;
+        <button class="btn" id="host-open-voting">Open Voting — Round ${s.round}</button>`;
     }
 
     else if (s.phase === 'voting') {
@@ -566,8 +565,7 @@ class TraitorsApp {
 
     else if (s.phase === 'gameover') {
       controls = `
-        <p style="color:var(--text-dim);text-align:center;margin-bottom:1rem;">Game complete.</p>
-        <button class="btn btn-danger" id="host-reset">Reset Game</button>`;
+        <p style="color:var(--text-dim);text-align:center;margin-bottom:1rem;">Game complete.</p>`;
     }
 
     return `
@@ -577,7 +575,8 @@ class TraitorsApp {
         <div class="card-title">Round ${s.round} — ${s.phase.toUpperCase()}</div>
         <div class="info-row"><span>Active players</span><span style="color:var(--gold)">${active.length}</span></div>
         ${controls}
-      </div>`;
+      </div>
+      <button class="btn btn-danger" id="host-reset" style="margin-top:0.75rem;opacity:0.6;font-size:0.75rem;">Reset Game</button>`;
   }
 
   attachEvents() {
