@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>The Traitors</title>
+<title>Förrädarna på Augustenro</title>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;900&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -271,6 +271,10 @@ const firebaseConfig = {
 const firebaseApp = initializeApp(firebaseConfig);
 const db = getDatabase(firebaseApp);
 const gameRef = ref(db, 'traitors_game');
+window._gameRef = gameRef;
+window._update = update;
+window._set = set;
+window._get = get;
 
 const HOST_SECRET = 'secret';
 
@@ -343,7 +347,11 @@ class TraitorsApp {
 
   render() {
     const app = document.getElementById('app');
-    let html = `<div class="logo"><h1>THE TRAITORS</h1><p class="subtitle">Who among you can be trusted?</p></div>`;
+    const activeInput = document.getElementById('name-input');
+    const savedInput = activeInput ? activeInput.value : null;
+    const hadFocus = activeInput === document.activeElement;
+
+    let html = `<div class="logo"><h1>FÖRRÄDARNA</h1><p class="subtitle">På Augustenro</p></div>`;
 
     if (this.host) {
       html += this.renderHost();
@@ -359,6 +367,14 @@ class TraitorsApp {
 
     app.innerHTML = html;
     this.attachEvents();
+
+    if (savedInput !== null) {
+      const newInput = document.getElementById('name-input');
+      if (newInput) {
+        newInput.value = savedInput;
+        if (hadFocus) newInput.focus();
+      }
+    }
   }
 
   renderJoin() {
@@ -516,7 +532,8 @@ class TraitorsApp {
         <div class="info-row"><span>Active</span><span style="color:var(--gold)">${active.length}</span></div>
         <div class="player-list">${list || '<p style="color:var(--text-muted);font-size:0.9rem">No players yet...</p>'}</div>
         <div class="divider"></div>
-        <button class="btn" id="host-open-voting">Open Voting — Round ${s.round}</button>`;
+        <button class="btn" id="host-open-voting">Open Voting — Round ${s.round}</button>
+        <button class="btn" id="host-simulate" style="margin-top:0.5rem;opacity:0.6;font-size:0.75rem;">Add 50 Test Players</button>`;
     }
 
     else if (s.phase === 'voting') {
@@ -633,6 +650,24 @@ class TraitorsApp {
         this.render();
       });
     });
+
+    const simulateBtn = document.getElementById('host-simulate');
+    if (simulateBtn) {
+      simulateBtn.addEventListener('click', async () => {
+        const names = ['Alice','Björn','Cecilia','David','Emma','Filip','Gabriella','Henrik','Isabella','Johan','Klara','Lars','Maria','Niklas','Olivia','Patrik','Rebecka','Simon','Tilda','Ulf','Vera','Wilhelm','Xenia','Ylva','Zack','Astrid','Bengt','Carina','Daniel','Elsa','Fredrik','Gunilla','Hans','Ingrid','Jonas','Kristina','Lennart','Maja','Nils','Oskar','Petra','Rasmus','Sofia','Thomas','Ulla','Viktor','Wendy','Axel','Britta','Carl'];
+        simulateBtn.textContent = 'Adding...';
+        simulateBtn.classList.add('btn-disabled');
+        for (const name of names) {
+          const current = await getState();
+          const players = current.players || [];
+          if (!players.includes(name)) {
+            await update(gameRef, { players: [...players, name], phase: 'waiting' });
+          }
+          await new Promise(r => setTimeout(r, 80));
+        }
+        simulateBtn.textContent = 'Done!';
+      });
+    }
 
     const openVoting = document.getElementById('host-open-voting');
     if (openVoting) {
