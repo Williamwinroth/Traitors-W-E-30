@@ -519,7 +519,7 @@ class TraitorsApp {
     });
 
     const submitVote = document.getElementById('submit-vote');
-    if (submitVote && this.selectedVote) {
+    if (submitVote) {
       submitVote.addEventListener('click', async () => {
         if (!this.selectedVote||!this.myName) return;
         await update(gameRef, { [`votes/${this.myName}`]: this.selectedVote });
@@ -527,7 +527,7 @@ class TraitorsApp {
     }
 
     const submitEgVote = document.getElementById('submit-egvote');
-    if (submitEgVote && this.endgameVoteSelection) {
+    if (submitEgVote) {
       submitEgVote.addEventListener('click', async () => {
         if (!this.endgameVoteSelection||!this.myName) return;
         await update(gameRef, { [`endgameVotes/${this.myName}`]: this.endgameVoteSelection });
