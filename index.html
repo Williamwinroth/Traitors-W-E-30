@@ -163,6 +163,8 @@ class TraitorsApp {
                      document.getElementById('first-input') === document.activeElement ||
                      document.getElementById('last-input') === document.activeElement;
     const focusedId = document.activeElement?.id || null;
+    const voteGridScroll = document.querySelector('.vote-grid')?.scrollTop ?? 0;
+    const murderListScroll = document.querySelector('.murder-list-scroll')?.scrollTop ?? 0;
 
     let html = `<div class="logo"><h1>FÖRRÄDARNA PÅ AUGUSTENRO</h1></div>`;
 
@@ -191,6 +193,10 @@ class TraitorsApp {
       const l = document.getElementById('last-input');
       if (l) { l.value = savedLast; if (focusedId==='last-input') l.focus(); }
     }
+    const vg = document.querySelector('.vote-grid');
+    if (vg && voteGridScroll) vg.scrollTop = voteGridScroll;
+    const ml = document.querySelector('.murder-list-scroll');
+    if (ml && murderListScroll) ml.scrollTop = murderListScroll;
   }
 
   renderJoin() {
@@ -267,10 +273,10 @@ class TraitorsApp {
       <div class="status-badge badge-round">Round ${round} Complete</div>
       <div class="count-display">${active.length} remain</div>
       <div class="divider"></div>
-      <p style="color:var(--gold);font-size:0.85rem;font-family:'Cinzel',serif;letter-spacing:0.1em;margin-bottom:0.5rem;">BANISHED THIS ROUND</p>
-      ${thisElim.length ? thisElim.map(p=>`<div class="summary-elim">⚖ ${p}</div>`).join('') : '<p style="color:var(--text-muted);font-size:0.9rem;margin-bottom:0.5rem;">None</p>'}
-      <p style="color:#e57373;font-size:0.85rem;font-family:'Cinzel',serif;letter-spacing:0.1em;margin:0.75rem 0 0.5rem;">MURDERED THIS ROUND</p>
-      ${thisMurdered.length ? thisMurdered.map(p=>`<div class="summary-murdered">☠ ${p}</div>`).join('') : '<p style="color:var(--text-muted);font-size:0.9rem">None</p>'}
+      <p style="color:#e57373;font-size:0.85rem;font-family:'Cinzel',serif;letter-spacing:0.1em;margin-bottom:0.5rem;">MURDERED THIS ROUND</p>
+      ${thisMurdered.length ? thisMurdered.map(p=>`<div class="summary-murdered">☠ ${p}</div>`).join('') : '<p style="color:var(--text-muted);font-size:0.9rem;margin-bottom:0.5rem;">None</p>'}
+      <p style="color:var(--gold);font-size:0.85rem;font-family:'Cinzel',serif;letter-spacing:0.1em;margin:0.75rem 0 0.5rem;">BANISHED THIS ROUND</p>
+      ${thisElim.length ? thisElim.map(p=>`<div class="summary-elim">⚖ ${p}</div>`).join('') : '<p style="color:var(--text-muted);font-size:0.9rem">None</p>'}
       <div class="divider"></div>
       <p style="color:var(--text-dim);font-size:0.9rem;text-align:center;"><span class="waiting-dot"></span>Waiting for next round...</p>
     </div>`;
@@ -380,7 +386,7 @@ class TraitorsApp {
       controls = `
         <div class="info-row"><span>Votes cast</span><span style="color:var(--gold)">${voteCount} / ${active.length}</span></div>
         <div style="background:var(--surface2);border:1px solid var(--border2);border-radius:3px;padding:0.75rem;margin-bottom:1rem;">
-          ${this.getTopVoted(3).map(v=>`<div style="display:flex;justify-content:space-between;padding:0.3rem 0;font-size:0.95rem;"><span>${v.name}</span><span style="color:var(--gold)">${v.count}</span></div>`).join('')||'<p style="color:var(--text-muted);font-size:0.9rem">No votes yet</p>'}
+          ${this.getTopVoted(6).map((v,i)=>`<div style="display:flex;justify-content:space-between;padding:0.3rem 0;font-size:0.95rem;border-bottom:${i<5?'1px solid var(--border)':'none'};"><span style="color:${i<6?'var(--red-light)':'var(--text)'}">${v.name}</span><span style="color:var(--gold)">${v.count}</span></div>`).join('')||'<p style="color:var(--text-muted);font-size:0.9rem">No votes yet</p>'}
         </div>
         <button class="btn" id="host-simulate-votes" style="opacity:0.6;font-size:0.75rem;">Simulate Votes (Test)</button>
         <button class="btn" id="host-show-results" style="margin-top:0.5rem;">Close Voting & Show Results</button>`;
@@ -399,10 +405,10 @@ class TraitorsApp {
           <span style="color:var(--text-dim);font-size:0.85rem;">to murder</span>
         </div>
         <p style="color:var(--text-dim);font-size:0.85rem;margin-bottom:0.5rem;">Select ${this.murderLimit} to murder:</p>
-        <div style="max-height:260px;overflow-y:auto;">
+        <div class="murder-list-scroll" style="max-height:260px;overflow-y:auto;">
           ${murderable.map(p=>`<div class="murder-row"><input type="checkbox" class="murder-check" data-name="${p}" ${this.murderSelections.has(p)?'checked':''}/><span class="murder-name">${p}</span></div>`).join('')}
         </div>
-        <div style="margin-top:0.75rem;color:${selCount===this.murderLimit?'var(--gold)':'var(--red-light)'};font-family:Cinzel,serif;font-size:0.8rem;text-align:center;">${selCount} / ${this.murderLimit} selected</div>
+        <div id="murder-counter" style="margin-top:0.75rem;color:${selCount===this.murderLimit?'var(--gold)':'var(--red-light)'};font-family:Cinzel,serif;font-size:0.8rem;text-align:center;">${selCount} / ${this.murderLimit} selected</div>
         <button class="btn btn-danger ${selCount!==this.murderLimit?'btn-disabled':''}" id="host-do-murder">Confirm Murders</button>`;
     }
 
@@ -495,11 +501,21 @@ class TraitorsApp {
     }
 
     document.querySelectorAll('.vote-btn').forEach(btn => {
-      btn.addEventListener('click', () => { this.selectedVote = btn.dataset.vote; this.render(); });
+      btn.addEventListener('click', () => {
+        this.selectedVote = btn.dataset.vote;
+        document.querySelectorAll('.vote-btn').forEach(b => b.classList.toggle('selected', b.dataset.vote === this.selectedVote));
+        const sv = document.getElementById('submit-vote');
+        if (sv) { sv.classList.remove('btn-disabled'); sv.textContent = `Banish ${this.selectedVote}`; }
+      });
     });
 
     document.querySelectorAll('[data-egvote]').forEach(btn => {
-      btn.addEventListener('click', () => { this.endgameVoteSelection = btn.dataset.egvote; this.render(); });
+      btn.addEventListener('click', () => {
+        this.endgameVoteSelection = btn.dataset.egvote;
+        document.querySelectorAll('[data-egvote]').forEach(b => b.classList.toggle('selected', b.dataset.egvote === this.endgameVoteSelection));
+        const sv = document.getElementById('submit-egvote');
+        if (sv) { sv.classList.remove('btn-disabled'); sv.textContent = `Eliminate ${this.endgameVoteSelection}`; }
+      });
     });
 
     const submitVote = document.getElementById('submit-vote');
@@ -532,9 +548,15 @@ class TraitorsApp {
     document.querySelectorAll('.murder-check').forEach(cb => {
       cb.addEventListener('change', () => {
         const name = cb.dataset.name;
-        if (cb.checked) { if (this.murderSelections.size < this.murderLimit) this.murderSelections.add(name); else cb.checked = false; }
-        else { this.murderSelections.delete(name); }
-        this.render();
+        if (cb.checked) {
+          if (this.murderSelections.size < this.murderLimit) { this.murderSelections.add(name); }
+          else { cb.checked = false; return; }
+        } else { this.murderSelections.delete(name); }
+        const selCount = this.murderSelections.size;
+        const counter = document.getElementById('murder-counter');
+        if (counter) { counter.textContent = `${selCount} / ${this.murderLimit} selected`; counter.style.color = selCount === this.murderLimit ? 'var(--gold)' : 'var(--red-light)'; }
+        const confirmBtn = document.getElementById('host-do-murder');
+        if (confirmBtn) { confirmBtn.classList.toggle('btn-disabled', selCount !== this.murderLimit); }
       });
     });
 
